@@ -9,6 +9,7 @@ type SearchResponse = {
   overallBest: FlightOffer | null;
   byDestination: Record<string, FlightOffer[]>;
   errors?: string[];
+  debug?: { destination: string; offerCount: number; error: string | null }[];
 };
 
 export default function Home() {
@@ -74,6 +75,13 @@ export default function Home() {
         {result?.errors && (
           <div className="mt-6 text-xs text-haze-500">
             Some searches didn't return data: {result.errors.join("; ")}
+          </div>
+        )}
+
+        {/* Temporary diagnostics block — safe to remove once search is working */}
+        {result?.debug && (
+          <div className="mt-6 rounded-xl border border-dusk-700 bg-dusk-900/50 p-4 text-xs text-haze-400 font-mono whitespace-pre-wrap">
+            {JSON.stringify(result.debug, null, 2)}
           </div>
         )}
       </div>
