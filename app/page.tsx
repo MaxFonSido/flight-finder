@@ -3,7 +3,7 @@
 import { useState } from "react";
 import SearchForm, { type SearchPayload } from "@/components/SearchForm";
 import ResultsList from "@/components/ResultsList";
-import type { FlightOffer } from "@/lib/amadeus";
+import type { FlightOffer } from "@/lib/duffel";
 
 type SearchResponse = {
   overallBest: FlightOffer | null;

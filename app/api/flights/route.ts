@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { searchFlightOffers, type FlightOffer } from "@/lib/amadeus";
+import { searchFlightOffers, type FlightOffer } from "@/lib/duffel";
 import { expandCandidateDates, addDays } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +16,7 @@ type SearchRequestBody = {
 };
 
 // Hard ceiling on total API calls per request so a fat-fingered search
-// range doesn't blow through the Amadeus free-tier monthly quota.
+// range doesn't rack up an excessive number of Duffel offer requests.
 const MAX_TOTAL_CALLS = 24;
 
 export async function POST(req: NextRequest) {

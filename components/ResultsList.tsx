@@ -1,4 +1,4 @@
-import type { FlightOffer } from "@/lib/amadeus";
+import type { FlightOffer } from "@/lib/duffel";
 
 function formatDuration(minutes: number): string {
   const h = Math.floor(minutes / 60);
