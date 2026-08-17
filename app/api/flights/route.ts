@@ -85,6 +85,14 @@ export async function POST(req: NextRequest) {
   const errors = settled.filter((r) => r.error).map((r) => `${r.destination}: ${r.error}`);
   const allOffers = settled.flatMap((r) => r.offers);
 
+  // Temporary diagnostics: shows exactly what each Duffel search returned,
+  // so we can see what's happening even without server log access.
+  const debug = settled.map((r) => ({
+    destination: r.destination,
+    offerCount: r.offers.length,
+    error: r.error ?? null,
+  }));
+
   // Group by destination, cheapest first
   const byDestination: Record<string, FlightOffer[]> = {};
   for (const offer of allOffers) {
@@ -107,5 +115,6 @@ export async function POST(req: NextRequest) {
     overallBest,
     byDestination,
     errors: errors.length ? errors : undefined,
+    debug,
   });
 }
