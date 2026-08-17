@@ -44,6 +44,21 @@ async function duffelRequest<T>(
   return res.json();
 }
 
+export type Segment = {
+  originIata: string;
+  originName: string;
+  originTimeZone?: string;
+  destinationIata: string;
+  destinationName: string;
+  destinationTimeZone?: string;
+  departingAt: string; // ISO datetime, local to origin airport
+  arrivingAt: string; // ISO datetime, local to destination airport
+  carrierIata: string;
+  carrierName: string;
+  flightNumber: string;
+  aircraftName?: string;
+};
+
 export type FlightOffer = {
   id: string;
   price: number;
@@ -55,6 +70,9 @@ export type FlightOffer = {
   stops: number;
   durationMinutes: number;
   carrier: string;
+  carrierName: string;
+  outboundSegments: Segment[];
+  returnSegments?: Segment[];
 };
 
 function isoDurationToMinutes(iso: string | null | undefined): number {
@@ -65,6 +83,25 @@ function isoDurationToMinutes(iso: string | null | undefined): number {
   const hours = parseInt(match[1] ?? "0", 10);
   const minutes = parseInt(match[2] ?? "0", 10);
   return hours * 60 + minutes;
+}
+
+function normalizeSegment(segment: any): Segment {
+  return {
+    originIata: segment.origin?.iata_code ?? "???",
+    originName: segment.origin?.name ?? segment.origin?.iata_code ?? "Unknown",
+    originTimeZone: segment.origin?.time_zone,
+    destinationIata: segment.destination?.iata_code ?? "???",
+    destinationName: segment.destination?.name ?? segment.destination?.iata_code ?? "Unknown",
+    destinationTimeZone: segment.destination?.time_zone,
+    departingAt: segment.departing_at,
+    arrivingAt: segment.arriving_at,
+    carrierIata:
+      segment.marketing_carrier?.iata_code ?? segment.operating_carrier?.iata_code ?? "??",
+    carrierName:
+      segment.marketing_carrier?.name ?? segment.operating_carrier?.name ?? "Unknown airline",
+    flightNumber: segment.marketing_carrier_flight_number ?? "",
+    aircraftName: segment.aircraft?.name,
+  };
 }
 
 /**
@@ -128,12 +165,16 @@ export async function searchFlightOffers(opts: {
 
   const normalized: FlightOffer[] = offers.map((offer: any) => {
     const outboundSlice = offer.slices?.[0];
+    const returnSlice = offer.slices?.[1];
     const segments = outboundSlice?.segments ?? [];
     const stops = Math.max(segments.length - 1, 0);
+    const firstSegment = segments[0];
     const carrier =
-      segments[0]?.marketing_carrier?.iata_code ??
-      segments[0]?.operating_carrier?.iata_code ??
+      firstSegment?.marketing_carrier?.iata_code ??
+      firstSegment?.operating_carrier?.iata_code ??
       "??";
+    const carrierName =
+      firstSegment?.marketing_carrier?.name ?? firstSegment?.operating_carrier?.name ?? "Unknown airline";
 
     return {
       id: offer.id,
@@ -146,6 +187,9 @@ export async function searchFlightOffers(opts: {
       stops,
       durationMinutes: isoDurationToMinutes(outboundSlice?.duration),
       carrier,
+      carrierName,
+      outboundSegments: segments.map(normalizeSegment),
+      returnSegments: returnSlice?.segments?.map(normalizeSegment),
     };
   });
 
